@@ -109,6 +109,7 @@ class TwitterBot(object):
             (SchedTask(self.process_events, 1),
              SchedTask(self.check_statuses, 120)))
         self.lastUpdate = time.gmtime()
+	self.last5Statuses = set()
 
     def check_statuses(self):
         debug("In check_statuses")
@@ -121,8 +122,10 @@ class TwitterBot(object):
         
         nextLastUpdate = self.lastUpdate
         for update in updates:
+	    twid = update['id']
             crt = parse(update['created_at']).utctimetuple()
             if (crt > self.lastUpdate):
+              if (twid not in self.last5Statuses):
                 text = (htmlentitydecode(
                     update['text'].replace('\n', ' '))
                     .encode('utf-8', 'replace'))
@@ -137,6 +140,8 @@ class TwitterBot(object):
                             IRC_BOLD, text.decode('utf-8')))
                 
                 nextLastUpdate = crt
+  		self.last5Statuses.add(twid)
+
             else:
                 break
         self.lastUpdate = nextLastUpdate
